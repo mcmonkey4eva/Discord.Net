@@ -46,7 +46,7 @@ namespace Discord.Net.WebSockets
 
             _lock = new AsyncLock();
             _taskManager = new TaskManager(Cleanup);
-            CancelToken = new CancellationToken(true);
+            CancelToken = new CancellationToken(false);
             _connectedEvent = new ManualResetEventSlim(false);
 
 #if !NETSTANDARD1_3
@@ -102,9 +102,9 @@ namespace Discord.Net.WebSockets
             {
                 State = ConnectionState.Connected;
                 Logger.Info($"Connected");
+                _connectedEvent.Set();
 
                 OnConnected();
-                _connectedEvent.Set();
             }
             catch (Exception ex)
             {
@@ -174,8 +174,8 @@ namespace Discord.Net.WebSockets
             {
                 if (!_connectedEvent.Wait(_config.ConnectionTimeout, cancelToken))
                 {
-                    if (State != ConnectionState.Connected)
-                        throw new TimeoutException();
+                    //if (State != ConnectionState.Connected)
+                    //    throw new TimeoutException();
                 }
             }
             catch (OperationCanceledException)

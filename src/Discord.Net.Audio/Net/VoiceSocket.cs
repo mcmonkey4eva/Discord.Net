@@ -51,8 +51,8 @@ namespace Discord.Net.WebSockets
         public int Ping => _ping;
         internal VoiceBuffer OutputBuffer => _sendBuffer;
 
-        internal event EventHandler<InternalIsSpeakingEventArgs> UserIsSpeaking = delegate { };
-        internal event EventHandler<InternalFrameEventArgs> FrameReceived = delegate { };
+        public event EventHandler<InternalIsSpeakingEventArgs> UserIsSpeaking = delegate { };
+        public event EventHandler<InternalFrameEventArgs> FrameReceived = delegate { };
 
         private void OnUserIsSpeaking(ulong userId, bool isSpeaking)
             => UserIsSpeaking(this, new InternalIsSpeakingEventArgs(userId, isSpeaking));
@@ -470,6 +470,9 @@ namespace Discord.Net.WebSockets
                         var payload = (msg.Payload as JToken).ToObject<SpeakingEvent>(_serializer);
                         OnUserIsSpeaking(payload.UserId, payload.IsSpeaking);
                     }
+                    break;
+                case OpCodes.SelectProtocol:
+                    Logger.Info("Selected Protocol: " + (msg.Payload as JToken).ToString());
                     break;
                 default:
                     Logger.Warning($"Unknown Opcode: {opCode}");

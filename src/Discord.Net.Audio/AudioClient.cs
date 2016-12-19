@@ -80,7 +80,7 @@ namespace Discord.Audio
             //Async
             _taskManager = new TaskManager(Cleanup, false);
             _connectionLock = new AsyncLock();
-            CancelToken = new CancellationToken(true);
+            CancelToken = new CancellationToken(false);
 
             //Networking
             _config = client.Config;
@@ -172,10 +172,14 @@ namespace Discord.Audio
                 throw new ArgumentException("This channel is not part of the current server.", nameof(channel));
             if (VoiceSocket.Server == null)
                 throw new InvalidOperationException("This client has been closed.");
-
+            Logger.Verbose("AudioClient#Join: " + channel.Name + ", send vUpdate!");
             SendVoiceUpdate(channel.Server.Id, channel.Id);
             using (await _connectionLock.LockAsync().ConfigureAwait(false))
+            {
+                Logger.Verbose("AudioClient#Join: " + channel.Name + ", start WaitForConnection!");
                 await Task.Run(() => VoiceSocket.WaitForConnection(CancelToken)).ConfigureAwait(false);
+                Logger.Verbose("AudioClient#Join: " + channel.Name + ", end WaitForConnection!");
+            }
         }
 
         private async void OnReceivedEvent(WebSocketEventEventArgs e)

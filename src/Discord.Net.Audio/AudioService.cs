@@ -96,6 +96,7 @@ namespace Discord.Audio
                 }
 
                 await client.Join(channel).ConfigureAwait(false);
+                OnConnected();
                 return client;
             }
         }

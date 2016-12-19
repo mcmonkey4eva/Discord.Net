@@ -6,7 +6,7 @@ namespace Discord.Logging
     {
         private readonly DiscordClient _client;
 
-        public LogSeverity Level { get; }
+        public LogSeverity Level;
 
         public event EventHandler<LogMessageEventArgs> Message = delegate { };
 

@@ -2,7 +2,7 @@
 
 namespace Discord
 {
-    internal class InternalFrameEventArgs : EventArgs
+    public class InternalFrameEventArgs : EventArgs
     {
         public ulong UserId { get; }
         public ulong ChannelId { get; }

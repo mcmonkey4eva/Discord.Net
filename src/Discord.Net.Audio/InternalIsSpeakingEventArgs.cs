@@ -1,6 +1,6 @@
 ﻿namespace Discord.Audio
 {
-    internal class InternalIsSpeakingEventArgs
+    public class InternalIsSpeakingEventArgs
     {
         public ulong UserId { get; }
         public bool IsSpeaking { get; }
