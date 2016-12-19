@@ -112,7 +112,7 @@ namespace Discord.Net.WebSockets
             }
         }
 
-        protected abstract Task Run();
+        public abstract Task Run();
         protected virtual async Task Cleanup()
         {
             var oldState = State;

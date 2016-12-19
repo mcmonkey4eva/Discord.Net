@@ -89,7 +89,7 @@ namespace Discord.Net.WebSockets
             SessionId = null;
         }
 
-		protected override async Task Run()
+		public override async Task Run()
         {
             List<Task> tasks = new List<Task>();
             tasks.AddRange(_engine.GetTasks(CancelToken));

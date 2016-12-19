@@ -109,7 +109,7 @@ namespace Discord.Net.WebSockets
             _userId = null;
         }
 
-        protected override async Task Run()
+        public override async Task Run()
         {
             _udp = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
 
@@ -160,24 +160,26 @@ namespace Discord.Net.WebSockets
 
         private async Task ReceiveVoiceAsync(CancellationToken cancelToken)
         {
+            Logger.Verbose("Starting to receive...");
             var closeTask = cancelToken.Wait();
+            byte[] packet, decodingBuffer = null, nonce = null, result;
+            int packetLength, resultOffset, resultLength;
+            IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, 0);
+
+            if ((_audioConfig.Mode & AudioMode.Incoming) != 0)
+            {
+                decodingBuffer = new byte[MaxOpusSize];
+                nonce = new byte[24];
+            }
+
             try
             {
-                byte[] packet, decodingBuffer = null, nonce = null, result;
-                int packetLength, resultOffset, resultLength;
-                IPEndPoint endpoint = new IPEndPoint(IPAddress.Any, 0);
-
-                if ((_audioConfig.Mode & AudioMode.Incoming) != 0)
-                {
-                    decodingBuffer = new byte[MaxOpusSize];
-                    nonce = new byte[24];
-                }
-
                 while (!cancelToken.IsCancellationRequested)
                 {
                     await Task.Delay(1).ConfigureAwait(false);
                     if (_udp.Available > 0)
                     {
+                        Logger.Verbose("Received some data...");
 #if !NETSTANDARD1_3
                         packet = _udp.Receive(ref endpoint);
 #else
@@ -194,24 +196,44 @@ namespace Discord.Net.WebSockets
 
                         if (packetLength > 0 && endpoint.Equals(_endpoint))
                         {
+                            Logger.Verbose("Received " + packetLength + " while " + State);
                             if (State != ConnectionState.Connected)
                             {
                                 if (packetLength != 70)
-                                    return;
+                                {
 
+                                    Logger.Warning("Packet length not 70!");
+                                    continue;
+                                }
                                 string ip = Encoding.UTF8.GetString(packet, 4, 70 - 6).TrimEnd('\0');
                                 int port = packet[68] | packet[69] << 8;
 
                                 SendSelectProtocol(ip, port);
                                 if ((_audioConfig.Mode & AudioMode.Incoming) == 0)
-                                    return; //We dont need this thread anymore
+                                {
+
+                                    Logger.Warning("Audio not configured for incoming mode!");
+                                    return;
+                                }
                             }
                             else
                             {
                                 //Parse RTP Data
-                                if (packetLength < 12) return;
-                                if (packet[0] != 0x80) return; //Flags
-                                if (packet[1] != 0x78) return; //Payload Type
+                                if (packetLength < 12)
+                                {
+                                    Logger.Warning("Invalid short packet length : " + packetLength);
+                                    continue;
+                                }
+                                if (packet[0] != 0x80)
+                                {
+                                    Logger.Warning("Invalid packet, not flags: " + packet[0]);
+                                    continue;
+                                }
+                                if (packet[1] != 0x78)
+                                {
+                                    Logger.Warning("Invalid packet, not payload: " + packet[1]);
+                                    continue;
+                                }
 
                                 ushort sequenceNumber = (ushort)((packet[2] << 8) |
                                                                   packet[3] << 0);
@@ -228,12 +250,18 @@ namespace Discord.Net.WebSockets
                                 if (_isEncrypted)
                                 {
                                     if (packetLength < 28) //12 + 16 (RTP + Poly1305 MAC)
-                                        return;
+                                    {
+                                        Logger.Warning("Invalid packet length : " + packetLength);
+                                        continue;
+                                    }
 
                                     Buffer.BlockCopy(packet, 0, nonce, 0, 12);
                                     int ret = SecretBox.Decrypt(packet, 12, packetLength - 12, decodingBuffer, nonce, _secretKey);
                                     if (ret != 0)
+                                    {
+                                        Logger.Warning("Invalid packet, failed to decrypt: " + ret);
                                         continue;
+                                    }
                                     result = decodingBuffer;
                                     resultOffset = 0;
                                     resultLength = packetLength - 28;
@@ -246,18 +274,24 @@ namespace Discord.Net.WebSockets
                                 }
 
                                 /*if (_logLevel >= LogMessageSeverity.Debug)
-									RaiseOnLog(LogMessageSeverity.Debug, $"Received {buffer.Length - 12} bytes.");*/
+                                    RaiseOnLog(LogMessageSeverity.Debug, $"Received {buffer.Length - 12} bytes.");*/
 
                                 ulong userId;
                                 if (_ssrcMapping.TryGetValue(ssrc, out userId))
                                     OnFrameReceived(userId, Channel.Id, result, resultOffset, resultLength);
+                                else
+                                    OnFrameReceived(ssrc, Channel.Id, result, resultOffset, resultLength);
                             }
                         }
                     }
                 }
+                Logger.Warning("Voice socket IMMEDIATE STOP");
             }
-            catch (OperationCanceledException) { }
-            catch (InvalidOperationException) { } //Includes ObjectDisposedException
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         private async Task SendVoiceAsync(CancellationToken cancelToken)
