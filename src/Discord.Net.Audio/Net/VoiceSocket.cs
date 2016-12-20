@@ -340,7 +340,7 @@ namespace Discord.Net.WebSockets
                 bool hasFrame = false;
                 while (!cancelToken.IsCancellationRequested)
                 {
-                    if (!hasFrame && _sendBuffer.Pop(frame))
+                    if (!hasFrame && _sendBuffer.Pop(frame) && frame.Length == _encoder.SamplesPerFrame * _encoder.SampleSize)
                     {
                         ushort sequence = unchecked(_sequence++);
                         voicePacket[2] = (byte)(sequence >> 8);
@@ -422,8 +422,10 @@ namespace Discord.Net.WebSockets
                     }
                 }
             }
-            catch (OperationCanceledException) { }
-            catch (InvalidOperationException) { } //Includes ObjectDisposedException
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
         }
 #if !NETSTANDARD1_3
         //Closes the UDP socket when _disconnectToken is triggered, since UDPClient doesn't allow passing a canceltoken

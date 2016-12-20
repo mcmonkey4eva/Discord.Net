@@ -39,23 +39,23 @@ namespace Discord.Logging
         public void Error(string source, string message, Exception ex = null)
             => Log(LogSeverity.Error, source, message, ex);
         public void Error(string source, Exception ex)
-            => Log(LogSeverity.Error, source, (string)null, ex);
+            => Log(LogSeverity.Error, source, ex.ToString(), ex);
         public void Warning(string source, string message, Exception ex = null)
             => Log(LogSeverity.Warning, source, message, ex);
         public void Warning(string source, Exception ex)
-            => Log(LogSeverity.Warning, source, (string)null, ex);
+            => Log(LogSeverity.Warning, source, ex.ToString(), ex);
         public void Info(string source, string message, Exception ex = null)
             => Log(LogSeverity.Info, source, message, ex);
         public void Info(string source, Exception ex)
-            => Log(LogSeverity.Info, source, (string)null, ex);
+            => Log(LogSeverity.Info, source, ex.ToString(), ex);
         public void Verbose(string source, string message, Exception ex = null)
             => Log(LogSeverity.Verbose, source, message, ex);
         public void Verbose(string source, Exception ex)
-            => Log(LogSeverity.Verbose, source, (string)null, ex);
+            => Log(LogSeverity.Verbose, source, ex.ToString(), ex);
         public void Debug(string source, string message, Exception ex = null)
             => Log(LogSeverity.Debug, source, message, ex);
         public void Debug(string source, Exception ex)
-            => Log(LogSeverity.Debug, source, (string)null, ex);
+            => Log(LogSeverity.Debug, source, ex.ToString(), ex);
 
 #if NETSTANDARD1_3
         public void Error(string source, FormattableString message, Exception ex = null)
