@@ -56,8 +56,8 @@ namespace Discord.Net.WebSockets
 
         private void OnUserIsSpeaking(ulong userId, bool isSpeaking)
             => UserIsSpeaking(this, new InternalIsSpeakingEventArgs(userId, isSpeaking));
-        internal void OnFrameReceived(ulong userId, ulong channelId, byte[] buffer, int offset, int count)
-            => FrameReceived(this, new InternalFrameEventArgs(userId, channelId, buffer, offset, count));
+        internal void OnFrameReceived(ulong userId, ulong channelId, byte[] buffer, int offset, int count, int seq)
+            => FrameReceived(this, new InternalFrameEventArgs(userId, channelId, buffer, offset, count, seq));
 
         internal VoiceSocket(DiscordConfig config, AudioServiceConfig audioConfig, JsonSerializer serializer, Logger logger)
             : base(config, serializer, logger)
@@ -278,9 +278,9 @@ namespace Discord.Net.WebSockets
 
                                 ulong userId;
                                 if (_ssrcMapping.TryGetValue(ssrc, out userId))
-                                    OnFrameReceived(userId, Channel.Id, result, resultOffset, resultLength);
+                                    OnFrameReceived(userId, Channel.Id, result, resultOffset, resultLength, sequenceNumber);
                                 else
-                                    OnFrameReceived(ssrc, Channel.Id, result, resultOffset, resultLength);
+                                    OnFrameReceived(ssrc, Channel.Id, result, resultOffset, resultLength, sequenceNumber);
                             }
                         }
                     }

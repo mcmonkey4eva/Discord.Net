@@ -9,14 +9,16 @@ namespace Discord
         public byte[] Buffer { get; }
         public int Offset { get; }
         public int Count { get; }
+        public int Sequence { get; }
 
-        public InternalFrameEventArgs(ulong userId, ulong channelId, byte[] buffer, int offset, int count)
+        public InternalFrameEventArgs(ulong userId, ulong channelId, byte[] buffer, int offset, int count, int seq)
         {
             UserId = userId;
             ChannelId = channelId;
             Buffer = buffer;
             Offset = offset;
             Count = count;
+            Sequence = seq;
         }
     }
 }
