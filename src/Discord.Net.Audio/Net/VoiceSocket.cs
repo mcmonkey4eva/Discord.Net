@@ -22,7 +22,7 @@ namespace Discord.Net.WebSockets
 {
     public partial class VoiceSocket : WebSocket
     {
-        private const int MaxOpusSize = 4000;
+        private const int MaxOpusSize = 4000 * 10;
         private const string EncryptedMode = "xsalsa20_poly1305";
         private const string UnencryptedMode = "plain";
 
@@ -350,26 +350,35 @@ namespace Discord.Net.WebSockets
                         voicePacket[6] = (byte)(timestamp >> 8);
                         voicePacket[7] = (byte)(timestamp >> 0);
 
+                       Console.WriteLine("Test: " + frame.Length + ", " + encodedFrame.Length);
+
                         //Encode
                         int encodedLength = _encoder.EncodeFrame(frame, 0, encodedFrame);
 
-                        //Encrypt
-                        if (_isEncrypted)
-                        {
-                            Buffer.BlockCopy(voicePacket, 2, nonce, 2, 6); //Update nonce
-                            int ret = SecretBox.Encrypt(encodedFrame, encodedLength, voicePacket, 12, nonce, _secretKey);
-                            if (ret != 0)
-                                continue;
-                            rtpPacketLength = encodedLength + 12 + 16;
-                        }
-                        else
-                        {
-                            Buffer.BlockCopy(encodedFrame, 0, voicePacket, 12, encodedLength);
-                            rtpPacketLength = encodedLength + 12;
-                        }
+                        Console.WriteLine("Bammo!");
 
-                        timestamp = unchecked(timestamp + samplesPerFrame);
-                        hasFrame = true;
+                        if (encodedLength > 0)
+                        {
+                            //Encrypt
+                            if (_isEncrypted)
+                            {
+                                Buffer.BlockCopy(voicePacket, 2, nonce, 2, 6); //Update nonce
+                                int ret = SecretBox.Encrypt(encodedFrame, encodedLength, voicePacket, 12, nonce, _secretKey);
+                                if (ret != 0)
+                                    continue;
+                                rtpPacketLength = encodedLength + 12 + 16;
+                            }
+                            else
+                            {
+                                Buffer.BlockCopy(encodedFrame, 0, voicePacket, 12, encodedLength);
+                                rtpPacketLength = encodedLength + 12;
+                            }
+
+                            Console.WriteLine("++Send: " + sequence + ", " + timestamp + ", " + rtpPacketLength);
+
+                            timestamp = unchecked(timestamp + samplesPerFrame);
+                            hasFrame = true;
+                        }
                     }
 
                     long currentTicks = sw.ElapsedTicks;

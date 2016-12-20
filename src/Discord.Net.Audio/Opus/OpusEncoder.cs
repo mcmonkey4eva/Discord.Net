@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Discord.Audio.Opus
 {
@@ -40,12 +41,41 @@ namespace Discord.Audio.Opus
 		/// <param name="output">Buffer to store the encoded frame.</param>
 		/// <returns>Length of the frame contained in outputBuffer.</returns>
 		public unsafe int EncodeFrame(byte[] input, int inputOffset, byte[] output)
-		{			
-			int result = 0;
-			fixed (byte* inPtr = input)
-				result = UnsafeNativeMethods.Encode(_ptr, inPtr + inputOffset, SamplesPerFrame, output, output.Length);
+		{
+            Random random = new Random();
+            if (input.Length - inputOffset != SamplesPerFrame * SampleSize)
+            {
+                Console.WriteLine("Disregard invalid: " + input.Length + " mod " + inputOffset);
+                return 0;
+            }
+            bool allZero = true;
+            int allX = input[inputOffset];
+            for (int i = inputOffset; i < input.Length; i++)
+            {
+                if (input[i] != allX)
+                {
+                    allX = -1;
+                }
+                if (input[i] > 10)
+                {
+                    allZero = false;
+                    break;
+                }
+            }
+            if (allZero || allX != -1)
+            {
+                // Console.WriteLine("Disregard weak audio!");
+                return 0;
+            }
+            IntPtr encodedPtr = Marshal.AllocHGlobal(output.Length);
+            IntPtr inputPtr = Marshal.AllocHGlobal(input.Length);
+            Marshal.Copy(input, inputOffset, inputPtr, input.Length - inputOffset);
+            int result = UnsafeNativeMethods.Encode(_ptr, inputPtr, SamplesPerFrame, encodedPtr, 4000);
+            Marshal.FreeHGlobal(inputPtr);
+            Marshal.Copy(encodedPtr, output, 0, result);
+            Marshal.FreeHGlobal(encodedPtr);
 
-			if (result < 0)
+            if (result < 0)
 				throw new Exception(((OpusError)result).ToString());
 			return result;
 		}

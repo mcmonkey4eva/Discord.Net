@@ -44,7 +44,7 @@ namespace Discord.Audio.Opus
             [DllImport("opus", EntryPoint = "opus_encoder_destroy", CallingConvention = CallingConvention.Cdecl)]
             public static extern void DestroyEncoder(IntPtr encoder);
             [DllImport("opus", EntryPoint = "opus_encode", CallingConvention = CallingConvention.Cdecl)]
-            public static extern int Encode(IntPtr st, byte* pcm, int frame_size, byte[] data, int max_data_bytes);
+            public static extern int Encode(IntPtr st, IntPtr pcm, int frame_size, IntPtr data, int max_data_bytes);
             [DllImport("opus", EntryPoint = "opus_encoder_ctl", CallingConvention = CallingConvention.Cdecl)]
             public static extern int EncoderCtl(IntPtr st, Ctl request, int value);
 
