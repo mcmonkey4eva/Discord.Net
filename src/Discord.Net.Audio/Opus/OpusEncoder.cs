@@ -30,9 +30,9 @@ namespace Discord.Audio.Opus
 			if (error != OpusError.OK)
 				throw new InvalidOperationException($"Error occured while creating encoder: {error}");
 
-			SetForwardErrorCorrection(true);
+		/*	SetForwardErrorCorrection(true);
 			if (bitrate != null)
-				SetBitrate(bitrate.Value);
+				SetBitrate(bitrate.Value);*/
 		}
 
 		/// <summary> Produces Opus encoded audio from PCM samples. </summary>
@@ -65,7 +65,7 @@ namespace Discord.Audio.Opus
             if (allZero || allX != -1)
             {
                 // Console.WriteLine("Disregard weak audio!");
-                return 0;
+               // return 0;
             }
             IntPtr encodedPtr = Marshal.AllocHGlobal(output.Length);
             IntPtr inputPtr = Marshal.AllocHGlobal(input.Length);
